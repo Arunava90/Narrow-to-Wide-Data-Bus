@@ -1,0 +1,41 @@
+module narrow2wide_tb();
+
+reg            i_clk, i_rst;    
+reg            i_narrow_valid;
+reg   [31:0]   i_narrow_data; 
+wire           o_narrow_ready;
+reg            i_wide_ready;  
+wire  [127:0]  o_wide_data;   
+wire           o_wide_valid;
+
+narrow2wide narrow2wide_inst 
+              ( i_clk, i_rst, i_narrow_valid, i_narrow_data, o_narrow_ready,
+                i_wide_ready, o_wide_data, o_wide_valid );                
+
+initial begin
+    i_clk = 1'b0;
+    i_rst = 1'b0;
+    i_narrow_valid = 1'b0;
+    i_wide_ready = 1'b0;
+    i_narrow_data = 'b0;
+    #10 i_rst =1'b1;
+    #5 i_narrow_valid = 1'b1;
+    i_narrow_data = 32'h8A509F24;
+    #4 i_wide_ready = 1'b1;
+    #2 i_narrow_data = 32'h40E18AB3;
+    #2 i_narrow_data = 32'h95D806CA;
+ //   #2 i_wide_ready = 1'b0; 
+    #2 i_narrow_data = 32'h762E8A5B;
+ //   #4 i_wide_ready = 1'b1;
+    #2 i_narrow_data = 32'h0;
+    i_narrow_valid = 1'b0;
+    i_wide_ready = 1'b0;    
+    #10 $finish ;
+
+end
+
+always begin 
+    #1 i_clk = ~i_clk;
+end
+
+endmodule
