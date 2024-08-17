@@ -1,0 +1,58 @@
+module narrow2wide (
+                    input           i_clk, i_rst,
+                    input           i_narrow_valid,
+                    input  [31:0]   i_narrow_data,
+                    output          o_narrow_ready,
+                    input           i_wide_ready,
+                    output [127:0]  o_wide_data,
+                    output          o_wide_valid );
+
+reg [95:0] reg1;
+reg [1:0] count;
+reg count2;
+//wire w_wide_valid; 
+reg r_narrow_ready;
+
+always@(posedge i_clk or negedge i_rst) begin
+    if (~i_rst) begin
+	   reg1<='b0;
+	   count<='b0;
+	   r_narrow_ready<=1'b0;
+    end
+/*    else if (w_wide_valid) begin      // If single pulse want for wide_data valid
+       reg1<='b0;
+	   count<='b0;
+	   r_narrow_ready<=1'b0; 
+    end */
+    else if ((~i_narrow_valid)|(~i_wide_ready)) begin 
+	   reg1<=reg1;
+	   count<=count;
+	   r_narrow_ready<=1'b0;
+    end
+    else if (i_narrow_valid && i_wide_ready && count<2'b11) begin
+	   reg1<= {reg1[63:0],i_narrow_data};
+	   count<= count+1'b1;
+	   r_narrow_ready<=1'b1;
+    end
+    else begin
+	   reg1<=reg1;
+	   count<=count;
+	   r_narrow_ready<=1'b1;
+    end
+end
+
+always@ (posedge i_clk or negedge i_rst) begin
+    if (~i_rst)
+        count2 = 1'b0;
+    else if ((count==3'b11) && i_narrow_valid && i_wide_ready)
+        count2 = 1'b1;
+    else
+        count2 = 1'b0;
+end
+
+assign o_wide_data  = (~r_narrow_ready | ~i_wide_ready) ? 'b0 : ((r_narrow_ready && i_wide_ready && count2)?{reg1,i_narrow_data}:{32'b0,reg1});
+assign o_wide_valid = (r_narrow_ready && i_wide_ready && count2)? 1'b1: 1'b0;
+//assign o_wide_valid = w_wide_valid ;
+assign o_narrow_ready = r_narrow_ready ;
+
+endmodule
